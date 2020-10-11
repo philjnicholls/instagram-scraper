@@ -1,0 +1,4 @@
+proxyscrape
+pysocks
+scrapy
+scrapy-rotated-proxy

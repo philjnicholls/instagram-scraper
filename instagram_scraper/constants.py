@@ -1,0 +1,4 @@
+"""Constant values."""
+
+CONNECTION_TIMEOUT_DEFAULT = 10
+READ_TIMEOUT_DEFAULT = 30

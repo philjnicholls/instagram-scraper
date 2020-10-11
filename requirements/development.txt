@@ -1,0 +1,10 @@
+-r common.txt
+pudb
+flake8-docstrings==1.5.0
+flake8-import-order
+flake8-blind-except
+flake8-rst-docstrings
+flake8-fixme
+flake8-requirements
+pep8-naming
+darglint
