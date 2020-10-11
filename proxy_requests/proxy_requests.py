@@ -1,15 +1,14 @@
 """Handles requests to get HTML."""
-import requests
+from urllib.parse import urlparse
+
+from proxy_requests import constants
+from proxy_requests.exceptions import FailedToGetHTML
 
 from proxyscrape import CollectorNotFoundError
 from proxyscrape import create_collector, get_collector
-from proxyscrape import Proxy
+
+import requests
 from requests.adapters import HTTPAdapter
-from urllib.parse import urlparse
-
-from instagram_scraper.exceptions import FailedToGetHTML, NoMoreProxies
-
-from instagram_scraper import constants
 
 
 def get(url, use_free_proxies=False):
@@ -19,8 +18,9 @@ def get(url, use_free_proxies=False):
     :param use_free_proxies: Use free proxies scraped from the web
     :return: HTML string
     """
-    response = _get(url, use_free_proxies=False)
+    response = _get(url, use_free_proxies=use_free_proxies)
     return response
+
 
 def get_html(url, use_free_proxies=False):
     """Get HTML from a URL.
@@ -29,15 +29,16 @@ def get_html(url, use_free_proxies=False):
     :param use_free_proxies: Use free proxies scraped from the web
     :return: HTML string
     """
-    return get(url, use_free_proxies).text
+    return get(url, use_free_proxies=use_free_proxies).text
 
 
 def _get(url, use_free_proxies=False):
-    """Get Response from URL
+    """Get Response from URL.
 
     :param url: URL to get
     :param use_free_proxies: Use free proxies scraped from the web
     :return: A Response object
+    :raises FailedToGetHTML: If not HtML can be downloaded
     """
     http = _get_session(use_free_proxies)
     while(http):
@@ -45,12 +46,12 @@ def _get(url, use_free_proxies=False):
             response = http.get(url,
                                 timeout=(constants.CONNECTION_TIMEOUT_DEFAULT,
                                          constants.READ_TIMEOUT_DEFAULT),
-                               stream=True)
+                                stream=True)
             break
         except (requests.exceptions.ConnectionError,
                 requests.exceptions.ConnectTimeout,
                 requests.exceptions.ProxyError,
-                requests.exceptions.ReadTimeout) as e:
+                requests.exceptions.ReadTimeout):
             if use_free_proxies:
                 _mark_proxy_as_bad(url, http.proxies)
                 http = _get_session(use_free_proxies)

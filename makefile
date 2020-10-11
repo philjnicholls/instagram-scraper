@@ -14,6 +14,6 @@ init:
 	pip install -r requirements/common.txt
 
 test:
-	PYTHONPATH=. pytest --flake8
+	pytest instagram_scraper/ --flake8
 test_cov:
-	PYTHONPATH=. pytest --flake8 --cov --cov-report term-missing
+	pytest instagram_scraper/ --flake8 --cov --cov-report term-missing
