@@ -130,3 +130,6 @@ dmypy.json
 
 # Vim junk
 *.swp
+
+# Test CSV files
+*.csv

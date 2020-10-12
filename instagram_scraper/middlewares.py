@@ -7,8 +7,8 @@ from scrapy import signals
 
 from scrapy.http import Response
 
-from instagram_scraper.proxy_requests import get as proxy_get
-from instagram_scraper.proxy_requests import NoMoreProxies
+from proxy_requests.proxy_requests import ProxyRequests
+from proxy_requests.exceptions import NoMoreProxies
 
 
 # useful for handling different item types with a single interface
@@ -84,18 +84,18 @@ class InstagramScraperDownloaderMiddleware:
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
+        if not hasattr(self, 'proxy_requests'):
+            self.proxy_requests = ProxyRequests()
         try:
-            response = proxy_get(request.url, True)
+            response = self.proxy_requests.get(request.url, True)
         except NoMoreProxies as e:
             raise IgnoreRequest(e)
 
-        breakpoint()
         return Response(request.url,
                         status=response.status_code,
                         headers=response.headers,
                         body=response.raw.data,
-                        request=request
-                       )
+                        request=request)
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
