@@ -6,7 +6,7 @@ from proxy_requests.constants import (
     CONNECTION_TIMEOUT_DEFAULT,
     RETRY_COUNT,
 )
-from proxy_requests.exceptions import FailedToGetHTML
+from proxy_requests.exceptions import FailedToGetHTML, NoMoreProxies
 
 from proxyscrape import CollectorNotFoundError
 from proxyscrape import create_collector, get_collector
@@ -18,6 +18,10 @@ from  requests.adapters import Retry
 
 class ProxyRequests():
     """Makes requests using scraped free proxies."""
+
+    def __init__(self, filter_opts=None):
+        self.http = None
+        self.filter_opts = filter_opts
 
     def get(self, url, use_free_proxies=False):
         """Get Response from a URL.
@@ -91,7 +95,8 @@ class ProxyRequests():
         :param use_free_proxies: Use free proxies scraped from the web
         :return: HTTPSession configured for use
         """
-        if hasattr(self, 'http'):
+        if self.http:
+            # Use existing session if one exists
             return self.http
 
         retry_strategy = Retry(
@@ -104,6 +109,7 @@ class ProxyRequests():
         http = requests.Session()
         http.mount("https://", adapter)
         http.mount("http://", adapter)
+        breakpoint()
         if use_free_proxies:
             http.proxies = self._get_free_proxies()
 
@@ -119,7 +125,8 @@ class ProxyRequests():
         try:
             collector = get_collector('scraping-proxies')
         except CollectorNotFoundError:
-            collector = create_collector('scraping-proxies', ['socks4'])
+            collector = create_collector('scraping-proxies',
+                                         ['socks4', 'socks5'])
 
         return collector
 
@@ -129,9 +136,9 @@ class ProxyRequests():
         :return: Dictionary of proxies for requests Session
         """
         collector = self._get_free_proxies_collector()
-        proxy = collector.get_proxy({'type': 'socks4'})
+        proxy = collector.get_proxy(filter_opts=self.filter_opts)
 
         if proxy:
             return {'http': f'socks4://{proxy.host}:{proxy.port}',
                     'https': f'socks4://{proxy.host}:{proxy.port}'}
-        return None
+        raise NoMoreProxies

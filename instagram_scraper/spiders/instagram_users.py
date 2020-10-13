@@ -12,13 +12,14 @@ class InstagramSpider(scrapy.Spider):
 
     name = 'instagram_users'
 
-    def __init__(self, users, **kwargs):
+    def __init__(self, users, country=None, **kwargs):
         """Split commas separated users into a list.
 
         :param users: Commas separated list of users
         :param kwargs: Any additional parameters to pass to parent
         """
         self.users = users.split(',')
+        self.country = country
         super().__init__(**kwargs)
 
     def start_requests(self):
@@ -28,7 +29,9 @@ class InstagramSpider(scrapy.Spider):
         """
         for username in self.users:
             url = f'https://www.instagram.com/{username}/?hl=en'
-            yield scrapy.Request(url, callback=self.parse)
+            yield scrapy.Request(url,
+                                 callback=self.parse,
+                                 meta={'country': self.country})
 
     def parse(self, response):
         """Parse just the first page.

@@ -5,6 +5,7 @@
 
 from scrapy import signals
 
+from scrapy.exceptions import CloseSpider
 from scrapy.http import Response
 
 from proxy_requests.proxy_requests import ProxyRequests
@@ -85,11 +86,15 @@ class InstagramScraperDownloaderMiddleware:
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
         if not hasattr(self, 'proxy_requests'):
-            self.proxy_requests = ProxyRequests()
+            breakpoint()
+            filter_opts = {}
+            filter_opts['code'] = request.meta['country'] if 'country' in request.meta else None
+            filter_opts['type'] = ['socks4', 'socks5']
+            self.proxy_requests = ProxyRequests(filter_opts=filter_opts)
         try:
-            response = self.proxy_requests.get(request.url, True)
-        except NoMoreProxies as e:
-            raise IgnoreRequest(e)
+            response = self.proxy_requests.get(request.url, use_free_proxies=True)
+        except NoMoreProxies:
+            raise CloseSpider('No more proxies found.')
 
         return Response(request.url,
                         status=response.status_code,

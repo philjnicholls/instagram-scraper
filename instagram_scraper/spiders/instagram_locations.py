@@ -1,4 +1,4 @@
-"""Spider to scrape posts from Instagram tags."""
+"""Spider to scrape posts from Instagram locations."""
 import json
 import re
 
@@ -8,29 +8,27 @@ import scrapy
 
 
 class InstagramSpider(scrapy.Spider):
-    """Spider to extract Instagram posts for a list of tags."""
+    """Spider to extract Instagram posts for a list of locations."""
 
-    name = 'instagram_tags'
+    name = 'instagram_locations'
 
-    def __init__(self, tags, country=None, **kwargs):
+    def __init__(self, locations, country=None, **kwargs):
         """Split commas separated locations into a list.
 
-        :param tags: Commas separated list of tags
+        :param locations: Commas separated list of locations
         :param kwargs: Any additional parameters to pass to parent
         """
-        self.tags = tags.split(',')
-        breakpoint()
+        self.locations = locations.split(',')
         self.country = country
         super().__init__(**kwargs)
 
     def start_requests(self):
-        """Loop over tags and yield results.
+        """Loop over locations and yield results.
 
-        :yields: Response of each tags Instagram posts
+        :yields: Response of each usernames Instagram posts
         """
-        for tag in self.tags:
-            url = f'https://www.instagram.com/explore/tags/{tag}/'
-            breakpoint()
+        for location in self.locations:
+            url = f'https://www.instagram.com/explore/locations/{location}/'
             yield scrapy.Request(url,
                                  callback=self.parse,
                                  meta={'country': self.country})
@@ -46,24 +44,25 @@ class InstagramSpider(scrapy.Spider):
                                 '/text()').extract_first()
         json_string = re.match(r'.*?(\{.*\}).*?', script).group(1)
         data = json.loads(json_string)
-        tag = data['entry_data']['TagPage'][0]['graphql']['hashtag']['name']
+        location_id = data[
+            'entry_data']['LocationsPage'][0]['graphql']['location']['id']
         # all that we have to do here is to parse the JSON we have
         next_page_bool = data[
-            'entry_data']['TagPage'][0]['graphql']['hashtag'][
-                'edge_hashtag_to_media']['page_info']['has_next_page']
+            'entry_data']['LocationsPage'][0]['graphql']['location'][
+                'edge_location_to_media']['page_info']['has_next_page']
         edges = data[
-            'entry_data']['TagPage'][0]['graphql']['hashtag'][
-                'edge_hashtag_to_media']['edges']
+            'entry_data']['LocationsPage'][0]['graphql']['location'][
+                'edge_location_to_media']['edges']
         for i in edges:
             item = node_to_post(i['node'])
             yield item
         if next_page_bool:
             cursor = data[
-                'entry_data']['TagPage'][0]['graphql']['hashtag'][
-                    'edge_hashtag_to_media']['page_info']['end_cursor']
+                'entry_data']['LocationsPage'][0]['graphql']['location'][
+                    'edge_location_to_media']['page_info']['end_cursor']
             url = (f'https://www.instagram.com/graphql/query/'
-                   f'?query_hash=298b92c8d7cad703f7565aa892ede943&'
-                   f'variables={{"tag_name":"{tag}","first":12,'
+                   f'?query_hash=ac38b90f0f3981c42092016a37c59bf7&'
+                   f'variables={{"id":"{location_id}","first":12,'
                    f'"after":"{cursor}"}}')
             yield scrapy.Request(url, callback=self.parse_pages)
 
@@ -74,18 +73,19 @@ class InstagramSpider(scrapy.Spider):
         :yields: A dictionary of Instagram post data
         """
         data = json.loads(response.text)
-        tag = data['data']['hashtag']['name']
-        for i in data['data']['hashtag']['edge_hashtag_to_media']['edges']:
+        location_id = data['data']['location']['id']
+        for i in data['data']['location']['edge_location_to_media']['edges']:
             item = node_to_post(i['node'])
             yield item
-        next_page_bool = data['data']['hashtag']['edge_hashtag_to_media'][
+        next_page_bool = data['data']['location']['edge_location_to_media'][
             'page_info']['has_next_page']
         if next_page_bool:
             cursor = data[
-                'data']['hashtag']['edge_hashtag_to_media'][
+                'data']['location']['edge_location_to_media'][
                     'page_info']['end_cursor']
             url = (f'https://www.instagram.com/graphql/query/'
-                   f'?query_hash=298b92c8d7cad703f7565aa892ede943&'
-                   f'variables={{"tag_name":"{tag}","first":12,'
+                   f'?query_hash=ac38b90f0f3981c42092016a37c59bf7&'
+                   f'variables={{"id":"{location_id}","first":12,'
                    f'"after":"{cursor}"}}')
             yield scrapy.Request(url, callback=self.parse_pages)
+

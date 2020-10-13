@@ -1,18 +1,30 @@
-import scrapy
+"""Helper functions for use in spiders."""
 from datetime import datetime
 
+import scrapy
+
+
 def node_to_post(node):
+    """Covert Instragram post data format to item format.
+
+    :param node: Instagram data in dict
+    :returns: Dict in updated, flatter format
+    """
     url = 'https://www.instagram.com/p/' + node['shortcode']
     video = node['is_video']
     date_posted_timestamp = node['taken_at_timestamp']
-    date_posted_human = datetime.fromtimestamp(date_posted_timestamp).strftime("%d/%m/%Y %H:%M:%S")
-    like_count = node['edge_liked_by']['count'] if "edge_liked_by" in node.keys() else ''
-    comment_count = node['edge_media_to_comment']['count'] if 'edge_media_to_comment' in node.keys() else ''
-    owner = node['owner']['username'] if 'username' in node['owner'] else node['owner']['id']
+    date_posted_human = datetime.fromtimestamp(
+        date_posted_timestamp).strftime("%d/%m/%Y %H:%M:%S")
+    like_count = node['edge_liked_by'][
+        'count'] if "edge_liked_by" in node.keys() else ''
+    comment_count = node['edge_media_to_comment'][
+        'count'] if 'edge_media_to_comment' in node.keys() else ''
+    owner = node['owner'][
+        'username'] if 'username' in node['owner'] else node['owner']['id']
     captions = ""
     if node['edge_media_to_caption']:
-        for i2 in node['edge_media_to_caption']['edges']:
-            captions += i2['node']['text'] + "\n"
+        captions = '\n'.join(caption['node'][
+            'text'] for caption in node['edge_media_to_caption']['edges'])
 
     if video:
         if 'video_url' in node:
@@ -40,14 +52,21 @@ def node_to_post(node):
 
     if item['is_video'] and not item['video_url']:
         return scrapy.Request(item['post_url'],
-                             callback=get_video,
-                             meta={'item':
-                                   item})
+                              callback=get_video,
+                              meta={'item':
+                                    item})
 
     return item
 
+
 def get_video(response):
+    """Get the video url from the post page.
+
+    :param response: Response of the post page
+    :returns: Updated post dictionary
+    """
     item = response.meta['item']
-    video_url = response.xpath('//meta[@property="og:video"]/@content').extract_first()
+    video_url = response.xpath(
+        '//meta[@property="og:video"]/@content').extract_first()
     item['video_url'] = video_url
     return item
