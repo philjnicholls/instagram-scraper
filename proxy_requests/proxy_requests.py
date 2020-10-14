@@ -109,7 +109,6 @@ class ProxyRequests():
         http = requests.Session()
         http.mount("https://", adapter)
         http.mount("http://", adapter)
-        breakpoint()
         if use_free_proxies:
             http.proxies = self._get_free_proxies()
 

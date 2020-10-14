@@ -19,7 +19,6 @@ class InstagramSpider(scrapy.Spider):
         :param kwargs: Any additional parameters to pass to parent
         """
         self.tags = tags.split(',')
-        breakpoint()
         self.country = country
         super().__init__(**kwargs)
 
@@ -30,7 +29,6 @@ class InstagramSpider(scrapy.Spider):
         """
         for tag in self.tags:
             url = f'https://www.instagram.com/explore/tags/{tag}/'
-            breakpoint()
             yield scrapy.Request(url,
                                  callback=self.parse,
                                  meta={'country': self.country})

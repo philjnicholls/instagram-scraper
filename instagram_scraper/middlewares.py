@@ -86,7 +86,6 @@ class InstagramScraperDownloaderMiddleware:
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
         if not hasattr(self, 'proxy_requests'):
-            breakpoint()
             filter_opts = {}
             filter_opts['code'] = request.meta['country'] if 'country' in request.meta else None
             filter_opts['type'] = ['socks4', 'socks5']
