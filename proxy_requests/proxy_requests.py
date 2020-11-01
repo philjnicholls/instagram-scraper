@@ -22,6 +22,8 @@ class ProxyRequests():
     def __init__(self, filter_opts=None):
         self.http = None
         self.filter_opts = filter_opts
+        collector = ProxyRequests._get_free_proxies_collector()
+        collector.refresh_proxies(force=True)
 
     def get(self, url, use_free_proxies=False):
         """Get Response from a URL.
